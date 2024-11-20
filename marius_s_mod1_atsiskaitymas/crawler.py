@@ -7,10 +7,14 @@ def crawling(url, timeout, format='list'):
 
     """
     Crawl articles from specified URL and return the article titles and associated image URLs.
-    :param url: https://www.lrytas.lt/
-    :param timeout: set maximum time in seconds to run the crawl before stopping
-    :param format: choose which type of format to return data in
-    :return: List of tuples (article_title, image_url)
+    :param url:
+        The URL of the website to crawl e.g. "https://www.lrytas.lt/"
+    :param timeout:
+        The maximum time in seconds to run the crawl before stopping
+    :param format:
+        The format in which to return the data ('list' or 'csv')
+    :return:
+        List of tuples, where each tuple contains the article title and attached image URL
     """
     start_time = time.time()
     #starting the timer
