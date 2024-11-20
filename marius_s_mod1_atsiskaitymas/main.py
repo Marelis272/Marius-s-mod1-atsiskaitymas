@@ -6,7 +6,7 @@ base_url_1 = "https://www.lrytas.lt/"
 
 def crawling(url, timeout):
     start_time = time.time() #starting the timer
-    title_list = [] #create empty list to store titles in
+    articles = [] #create empty list to store articles in
 
     try:
         response = requests.get(url) #send get request to URL
@@ -24,7 +24,15 @@ def crawling(url, timeout):
                 break #if time is exceeded, stop loop
 
             link = title.find('a')
-            title_list.append(link.text.strip()) #add titles to title list
+            article_title = link.text.strip() #add titles to title list
+
+            image_tag = title.find_previous('img')
+            #search for the closest image element
+            image_url = image_tag['src'] if image_tag else None
+            # get the 'src' attribute of the image_tag
+
+            articles.append((article_title, image_url))
+
 
     except requests.exceptions.RequestException as error:
         #cathces errors during HTTP request
@@ -38,9 +46,17 @@ def crawling(url, timeout):
         #runs after the function is finished
         print("Crawling attempt finished")
 
-    return title_list #return the title list
+    return articles #return the title list
 
-titles = crawling("https://www.lrytas.lt/", 5)
 
-for index, title in enumerate(titles, start=1):
+articles = crawling("https://www.lrytas.lt/", 5)
+
+for index, (title, image_url) in enumerate(articles, start=1):
+    #adds a number to each article in ascending order
     print(f"{index}. {title}")
+    if image_url:
+        print(f"Image: <a href='{image_url}'>Click here to view image</a>")
+        #if there is an image print click here... instead of full image url
+    else:
+        print("Image: No image found")
+        #else no image found
