@@ -22,3 +22,12 @@ def crawling(url, timeout):
                 return
             link = title.find('a')
             title_list.append(link.text.strip)
+
+    except requests.exceptions.RequestException as error:
+        print(f"Request failed: {error}")
+
+    except Exception as error:
+        print(f"An error occurred: {error}")
+
+    finally:
+        print("Crawling attempt finished")
