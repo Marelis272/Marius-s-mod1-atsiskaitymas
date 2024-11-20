@@ -1,13 +1,15 @@
 import requests
 from bs4 import BeautifulSoup
 import time
+import csv
 
-def crawling(url, timeout):
+def crawling(url, timeout, format='list'):
 
     """
     Crawl articles from specified URL and return the article titles and associated image URLs.
     :param url: https://www.lrytas.lt/
     :param timeout: set maximum time in seconds to run the crawl before stopping
+    :param format: choose which type of format to return data in
     :return: List of tuples (article_title, image_url)
     """
     start_time = time.time()
@@ -59,4 +61,17 @@ def crawling(url, timeout):
         #runs after the function is finished
         print("Crawling attempt finished")
 
-    return articles #return the title list
+    if format == 'list':
+        #if format is list, return as is
+        return articles
+    elif format == 'csv':
+        #if format is csv return csv file
+        with open('articles.csv', 'w', newline='', encoding='utf-8') as file:
+            writer = csv.writer(file)
+            writer.writerow(['Title', 'Image URL'])
+            for article in articles:
+                writer.writerow(article)
+        return "CSV file created successfully"
+    else:
+        #else return error - unsupported format
+        raise ValueError("Unsupported output format, please choose 'list' or 'csv'")
