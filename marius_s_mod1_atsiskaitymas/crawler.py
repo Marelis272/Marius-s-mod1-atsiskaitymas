@@ -1,14 +1,15 @@
 import requests
-from bs4 import BeautifulSoup
+from lxml import html
+from urllib.parse import urljoin
 import time
 import csv
 
-def crawling(site='lrytas', timeout=10, format='list'):
+def crawling(site='https://www.lrytas.lt/', timeout=10, format='list'):
 
     """
     Crawl articles from specified URL and return the article titles and associated image URLs.
     :param site:
-        The site to crawl ('lrytas' or 'gintarine')
+        The site to crawl ('https://www.lrytas.lt/' or 'https://kauno.diena.lt/')
     :param timeout:
         The maximum time in seconds to run the crawl before stopping
     :param format:
@@ -16,58 +17,69 @@ def crawling(site='lrytas', timeout=10, format='list'):
     :return:
         List of tuples, where each tuple contains the article title and attached image URL
     """
-    start_time = time.time()
-    #starting the timer
+    start_time = time.time() #start the timer
     articles = []
-    #create empty list to store articles in
 
-    if site == 'lrytas':
-        url = "https://www.lrytas.lt/"
-        title_class = 'text-base font-medium text-black-custom'
-        image_search = lambda title: title.find_previous('img')
-    elif site == 'gintarine':
-        url = "https://www.gintarine.lt/imunitetas"
-        title_class = "product__title"
-        image_search = lambda title: title.find_parent('div', class_='product_img').find('img')
+    #site specific paths
+    if site == 'https://www.lrytas.lt/':
+        url = 'https://www.lrytas.lt/'
+        title_path = "//h2[contains(@class, 'text-base') and contains(@class, 'font-medium') and contains(@class, 'text-black-custom')]/a[1]/text()"
+        image_path = "//div[contains(@class, 'rounded-[4px]')]/a/img/@src"
+
+    elif site == 'https://kauno.diena.lt/':
+        url = 'https://kauno.diena.lt/'
+        title_path = "//a[contains(@class, 'articles-list-title')]/text()"
+        image_path = ".//div[contains(@class, 'articles-list-media')]//img"
+
     else:
-        raise ValueError("Unsupported site, please choose 'lrytas' or 'gintarine'")
+        raise ValueError("Unsupported site, please choose 'https://www.lrytas.lt/' or 'https://kauno.diena.lt/'")
 
     try:
         response = requests.get(url)
-        #send get request to URL
         response.raise_for_status()
-        #check for HTTP errors
-        soup = BeautifulSoup(response.content, "html.parser")
-        #parse - break down the content with beautifulsoup
+        tree = html.fromstring(response.content)
 
-        article_titles = soup.find_all('div', class_=title_class)
-        #find all articles by 'div' and title_class based on site choice
+        titles = tree.xpath(title_path)
+        images = tree.xpath(image_path)
 
-        for title in article_titles:
+        #loop through titles and images while keeping track of time
+        for title, img in zip(titles, images):
             if time.time() - start_time > timeout:
-                #check elapsed time
-                print("Timeout reached - stopping the function")
+                print("Timeout reached - function stopped")
                 break
-                #if time is exceeded, stop loop
 
-            link = title.find('a')
-            article_title = link.text.strip() if link else None
+            if isinstance(title, str):
+                article_title = title.strip()
+            elif hasattr(title, 'text'):
+                article_title = title.text.strip() if title.text else None
+            else:
+                article_title = None
 
-            image_tag = image_search(title)
-            #use image_search to find the image based on the title
-            image_url = image_tag['src'] if image_tag else None
-            #get the 'src' attribute of the image_tag
+            if not article_title:
+                print("Skipping article with no title")
+                continue
+
+            if isinstance(img, str):
+                image_url = img
+            elif hasattr(img, 'get'):
+                image_url = img.get("data-src") or img.get("src")
+            else:
+                image_url = None
+
+            if image_url and "blank.gif" not in image_url:
+                image_url = urljoin(url, image_url)
+            else:
+                print(f"Skipping article {article_title} with an invalid or missing image URL")
+                continue
 
             articles.append((article_title, image_url))
-            # add titles and image urls to list
-
 
     except requests.exceptions.RequestException as error:
         #cathces errors during HTTP request
         print(f"Request failed: {error}")
 
-    except ValueError as verror:
-        print(f"Error: {verror}")
+    except ValueError as value_error:
+        print(f"Error: {value_error}")
 
     except Exception as error:
         #catches unexpected errors
@@ -78,16 +90,14 @@ def crawling(site='lrytas', timeout=10, format='list'):
         print("Crawling attempt finished")
 
     if format == 'list':
-        #if format is list, return as is
         return articles
     elif format == 'csv':
-        #if format is csv return csv file
-        with open('articles.csv', 'w', newline='', encoding='utf-8') as file:
+        csv_file = "articles.csv"
+        with open(csv_file, "w", newline="", encoding="utf-8") as file:
             writer = csv.writer(file)
-            writer.writerow(['Title', 'Image URL'])
-            for article in articles:
-                writer.writerow(article)
-        return "CSV file created successfully"
+            writer.writerow(["Title", "Image URL"])
+            writer.writerows(articles)
+        print(f"CSV file '{csv_file}' created successfully.")
+        return csv_file
     else:
-        #else return error - unsupported format
-        raise ValueError("Unsupported output format, please choose 'list' or 'csv'")
+        raise ValueError("Unsupported format, please choose 'list' or 'csv'")
