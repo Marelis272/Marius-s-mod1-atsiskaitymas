@@ -3,6 +3,7 @@ from lxml import html
 from urllib.parse import urljoin
 import time
 import csv
+import os
 
 def crawling(site='https://www.lrytas.lt/', timeout=10, format='list'):
 
@@ -20,7 +21,7 @@ def crawling(site='https://www.lrytas.lt/', timeout=10, format='list'):
     start_time = time.time() #start the timer
     articles = []
 
-    #site specific paths
+    #site-specific paths
     if site == 'https://www.lrytas.lt/':
         url = 'https://www.lrytas.lt/'
         title_path = "//h2[contains(@class, 'text-base') and contains(@class, 'font-medium') and contains(@class, 'text-black-custom')]/a[1]/text()"
@@ -48,6 +49,7 @@ def crawling(site='https://www.lrytas.lt/', timeout=10, format='list'):
                 print("Timeout reached - function stopped")
                 break
 
+            #process the title
             if isinstance(title, str):
                 article_title = title.strip()
             elif hasattr(title, 'text'):
@@ -59,6 +61,7 @@ def crawling(site='https://www.lrytas.lt/', timeout=10, format='list'):
                 print("Skipping article with no title")
                 continue
 
+            #process the image URL
             if isinstance(img, str):
                 image_url = img
             elif hasattr(img, 'get'):
@@ -93,11 +96,26 @@ def crawling(site='https://www.lrytas.lt/', timeout=10, format='list'):
         return articles
     elif format == 'csv':
         csv_file = "articles.csv"
-        with open(csv_file, "w", newline="", encoding="utf-8") as file:
+        file_exists = os.path.isfile(csv_file)
+        existing_entries = set()
+
+        #Loading existing entries from csv file
+        if file_exists:
+            with open(csv_file, "r", encoding="utf-8") as file:
+                reader = csv.reader(file)
+                next(reader, None)
+                existing_entries.update(tuple(row) for row in reader)
+
+        #filter out duplicates
+        unique_articles = [article for article in articles if article not in existing_entries]
+
+        with open(csv_file, "a", newline="", encoding="utf-8") as file:
             writer = csv.writer(file)
-            writer.writerow(["Title", "Image URL"])
-            writer.writerows(articles)
-        print(f"CSV file '{csv_file}' created successfully.")
-        return csv_file
+            if not file_exists:
+                writer.writerow(["Title", "Image URL"])
+
+            writer.writerows(unique_articles)
+
+        return "CSV file updated" if unique_articles else "No new articles found"
     else:
         raise ValueError("Unsupported format, please choose 'list' or 'csv'")
