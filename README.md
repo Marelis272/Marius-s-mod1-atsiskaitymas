@@ -2,7 +2,9 @@
 
 ## Funkcijos
 
-Pavyzdys: crawl(site='lrytas.lt', timeout=5, format='list')
+Pavyzdys PyCharm python file: crawl(site='lrytas.lt', timeout=5, format='list')
+
+Pavyzdys Terminal: python main.py lrytas.lt 5 list
 
 site - nurodo svetainę, iš kurios bus imami duomenys
 
