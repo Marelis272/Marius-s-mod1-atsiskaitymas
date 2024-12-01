@@ -1,19 +1,27 @@
-Web Article Crawler
-A Python-based crawler for extracting article titles and associated image URLs from specific news websites (https://www.lrytas.lt/ and https://kauno.diena.lt/). It can output the data either as a list or append it to a CSV file while avoiding duplicate entries.
+# Marius-s-mod1-atsiskaitymas
 
-Features:
-Extracts article titles and image URLs.
-Supports two websites: Lrytas and Kauno Diena.
-Handles timeouts during crawling to prevent long waits.
-Outputs data as a Python list or appends to a CSV file.
-Avoids duplicate entries in the CSV file.
-Can skip invalid or duplicate articles with appropriate logging.
+## Funkcijos
 
-Requirements:
-Python 3.8+
+Pavyzdys: crawl(site='lrytas.lt', timeout=5, format='list')
 
-Required libraries:
-requests
-lxml
-csv
-os
+site - nurodo svetainę, iš kurios bus imami duomenys
+
+timeout - nurodo funkcijos veikimo laiką sekundėmis
+
+format - nurodo duomenų grąžinimo formatą
+
+### galimos svetainės
+
+    1. lrytas.lt
+    2. kaunodiena.lt
+
+### galimi duomenų formatai
+
+    1. list
+    2. csv
+
+## instaliacija
+
+poetry add Marius_s_mod1_atsiskaitymas
+
+pypi repozitorija - https://pypi.org/project/marius-s-mod1-atsiskaitymas/
